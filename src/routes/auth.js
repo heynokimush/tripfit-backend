@@ -10,6 +10,6 @@ router.post('/', authController.kakaoLogin);
 router.post('/logout', verifyToken, authController.logout);
 
 // 토큰 재발급
-router.post('/rotateToken', verifyToken, authController.rotateToken);
+router.post('/rotateToken', authController.rotateToken);
 
 module.exports = router;

@@ -128,7 +128,6 @@ const logout = async (req, res) => {
 
 // 토큰 재발급
 const rotateToken = async (req, res) => {
-  const { userId } = req.user;
   const { refreshToken } = req.cookies;
 
   if (!refreshToken) {
@@ -136,6 +135,10 @@ const rotateToken = async (req, res) => {
   }
 
   try {
+    // refreshToken 검증
+    const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
+    const userId = decoded.userId;
+
     // Redis에 저장된 refreshToken과 비교
     const savedToken = await redis.get(`refresh:${userId}`);
 
@@ -152,8 +155,8 @@ const rotateToken = async (req, res) => {
     // 쿠키 업데이트
     res.cookie('refreshToken', newRefreshToken, {
       httpOnly: true,
-      secure: true,
-      sameSite: 'none',
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
       maxAge: 30 * 60 * 1000,
     });
 
