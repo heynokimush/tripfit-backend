@@ -8,12 +8,44 @@ datasource db {
   directUrl = env("DIRECT_URL")
 }
 
-// 사용자 테이블
 model User {
-  id        String   @id @default(uuid())
-  email     String   @unique
-  password  String
-  nickname  String
+  id              Int          @id @default(autoincrement())
+  kakaoId         String       @unique
+  nickname        String       @unique
+  profileImageUrl String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+  trips           TripMember[]
+}
+
+model Trip {
+  id          Int          @id @default(autoincrement())
+  regionCodes String[]
+  types       String[]
+  startDate   DateTime
+  endDate     DateTime
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+  members     TripMember[]
+  schedule    Schedule?
+}
+
+model TripMember {
+  id        Int      @id @default(autoincrement())
+  userId    Int
+  tripId    Int
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+  trip      Trip     @relation(fields: [tripId], references: [id])
+
+  @@unique([userId, tripId])
+}
+
+model Schedule {
+  id        Int      @id @default(autoincrement())
+  tripId    Int      @unique
+  places    Json     @default("[]")
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  trip      Trip     @relation(fields: [tripId], references: [id])
 }
