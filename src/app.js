@@ -12,7 +12,7 @@ app.use(helmet());        // 보안 헤더 자동 설정
 app.use(cors({
     origin: [
         'http://localhost:3000',
-        'https://tripfit-web.vercel.app/',
+        'https://tripfit-web.vercel.app',
     ],
     credentials: true,
 }));          // 프론트엔드(React)에서 API 호출 허용
