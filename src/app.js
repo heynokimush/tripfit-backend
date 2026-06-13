@@ -4,6 +4,7 @@ const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
 
 const authRouter = require('./routes/auth');
+const courseRouter = require('./routes/course');
 
 const app = express();
 
@@ -20,6 +21,7 @@ app.use(express.json());  // JSON 요청 파싱
 app.use(cookieParser());
 
 app.use('/auth', authRouter);
+app.use('/course', courseRouter);
 
 // 테스트용 라우트
 app.get('/', (req, res) => {

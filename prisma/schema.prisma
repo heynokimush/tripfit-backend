@@ -20,7 +20,7 @@ model User {
 
 model Trip {
   id          Int          @id @default(autoincrement())
-  regionCodes String[]
+  regionCodes Json
   types       String[]
   startDate   DateTime
   endDate     DateTime
