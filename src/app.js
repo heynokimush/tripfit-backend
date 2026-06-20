@@ -6,6 +6,7 @@ const cookieParser = require('cookie-parser');
 const authRouter = require('./routes/auth');
 const courseRouter = require('./routes/course');
 const tripRouter = require('./routes/trip');
+const userRouter = require('./routes/user');
 
 const app = express();
 
@@ -24,6 +25,7 @@ app.use(cookieParser());
 app.use('/auth', authRouter);
 app.use('/course', courseRouter);
 app.use('/trip', tripRouter);
+app.use('/user', userRouter);
 
 // 테스트용 라우트
 app.get('/', (req, res) => {
