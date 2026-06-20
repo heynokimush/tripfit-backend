@@ -130,12 +130,18 @@ const logout = async (req, res) => {
 const rotateToken = async (req, res) => {
   const { refreshToken } = req.cookies;
 
+  const cookieOptions = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+  };
+
   if (!refreshToken) {
     return res.status(401).json({ message: 'refreshToken이 없습니다.' });
   }
 
   try {
-    // refreshToken 검증
+    // refreshToken 검증 (만료/위조 체크)
     const decoded = jwt.verify(refreshToken, process.env.JWT_SECRET);
     const userId = decoded.userId;
 
@@ -143,25 +149,33 @@ const rotateToken = async (req, res) => {
     const savedToken = await redis.get(`refresh:${userId}`);
 
     if (!savedToken || savedToken !== refreshToken) {
+      res.clearCookie('refreshToken', cookieOptions);
       return res.status(401).json({ message: '유효하지 않은 refreshToken입니다.' });
     }
 
     // 새 토큰 발급
     const { accessToken, refreshToken: newRefreshToken } = generateTokens(userId);
 
-    // Redis 업데이트
     await redis.set(`refresh:${userId}`, newRefreshToken, { ex: 60 * 30 });
 
-    // 쿠키 업데이트
     res.cookie('refreshToken', newRefreshToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+      ...cookieOptions,
       maxAge: 30 * 60 * 1000,
     });
 
     return res.status(200).json({ accessToken });
+
   } catch (err) {
+    // refreshToken 만료 또는 위조된 경우 (jwt.verify 실패)
+    res.clearCookie('refreshToken', cookieOptions);
+
+    if (err.name === 'TokenExpiredError') {
+      return res.status(401).json({ message: 'refreshToken이 만료되었습니다. 다시 로그인해주세요.' });
+    }
+    if (err.name === 'JsonWebTokenError') {
+      return res.status(401).json({ message: '유효하지 않은 refreshToken입니다.' });
+    }
+
     console.error('토큰 재발급 에러:', err.message);
     return res.status(500).json({ message: '토큰 재발급 중 오류가 발생했습니다.' });
   }
