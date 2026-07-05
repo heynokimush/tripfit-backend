@@ -31,5 +31,8 @@ app.use('/user', userRouter);
 app.get('/', (req, res) => {
   res.json({ message: 'Tripfit 서버 작동 중!' });
 });
+app.get('/ping', (req, res) => {
+  res.status(200).json({ message: 'pong' });
+});
 
 module.exports = app;
