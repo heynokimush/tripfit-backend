@@ -59,7 +59,7 @@ const createCourse = async (req, res) => {
 
     // 4. 프론트에 응답
     return res.status(201).json({
-      tripId: trip.id,
+      tripId: trip.uuid,
       scheduleId: schedule.id,
       places,
     });
