@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const cookieParser = require('cookie-parser');
+const swaggerUi = require('swagger-ui-express');
+const swaggerSpec = require('./swagger');
 
 const authRouter = require('./routes/auth');
 const courseRouter = require('./routes/course');
@@ -21,6 +23,9 @@ app.use(cors({
 }));          // 프론트엔드(React)에서 API 호출 허용
 app.use(express.json());  // JSON 요청 파싱
 app.use(cookieParser());
+
+// Swagger UI
+app.use('/api-docs', swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 app.use('/auth', authRouter);
 app.use('/course', courseRouter);
