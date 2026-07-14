@@ -110,7 +110,7 @@ router.get('/:uuid', verifyToken, tripController.getTripDetail);
  *       201:
  *         description: 추가 성공
  */
-router.post('/:uuid/spots', verifyToken, spotController.addSpot);
+router.post('/:tripId/spots', verifyToken, spotController.addSpot);
 
 /**
  * @swagger
@@ -160,7 +160,7 @@ router.post('/:uuid/spots', verifyToken, spotController.addSpot);
  *       404:
  *         description: 장소 없음
  */
-router.patch('/:uuid/spots/:spotId', verifyToken, spotController.updateSpot);
+router.patch('/:tripId/spots/:spotId', verifyToken, spotController.updateSpot);
 
 /**
  * @swagger
@@ -187,6 +187,6 @@ router.patch('/:uuid/spots/:spotId', verifyToken, spotController.updateSpot);
  *       404:
  *         description: 장소 없음
  */
-router.delete('/:uuid/spots/:spotId', verifyToken, spotController.deleteSpot);
+router.delete('/:tripId/spots/:spotId', verifyToken, spotController.deleteSpot);
 
 module.exports = router;
