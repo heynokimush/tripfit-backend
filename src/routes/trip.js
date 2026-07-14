@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const tripController = require('../controllers/tripController');
+const spotController = require('../controllers/spotController');
 const { verifyToken } = require('../middlewares/authMiddleware');
 
 /**
