@@ -21,6 +21,16 @@ async function main() {
 }
 main();
 
+// Supabase 슬립 방지 (5분마다 DB 쿼리)
+setInterval(async () => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    console.log('💓 DB keep-alive ping');
+  } catch (e) {
+    console.error('DB ping 실패:', e.message);
+  }
+}, 5 * 60 * 1000);
+
 app.listen(PORT, () => {
   console.log(`✅ 서버 실행 중: http://localhost:${PORT}`);
 });
