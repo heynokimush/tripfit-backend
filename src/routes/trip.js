@@ -46,7 +46,7 @@ router.get('/', verifyToken, tripController.getTrips);
 
 /**
  * @swagger
- * /trip/{tripId}:
+ * /trip/{uuid}:
  *   get:
  *     summary: 여행 상세 조회
  *     tags: [Trip]
@@ -54,7 +54,7 @@ router.get('/', verifyToken, tripController.getTrips);
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: tripId
+ *         name: uuid
  *         required: true
  *         schema:
  *           type: string
@@ -72,7 +72,7 @@ router.get('/:uuid', verifyToken, tripController.getTripDetail);
 
 /**
  * @swagger
- * /trip/{tripId}/spots:
+ * /trip/{uuid}/spots:
  *   post:
  *     summary: 일정 추가
  *     tags: [Spot]
@@ -80,7 +80,7 @@ router.get('/:uuid', verifyToken, tripController.getTripDetail);
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: tripId
+ *         name: uuid
  *         required: true
  *         schema:
  *           type: string
@@ -95,8 +95,6 @@ router.get('/:uuid', verifyToken, tripController.getTripDetail);
  *                 type: string
  *               time:
  *                 type: string
- *               type:
- *                 type: string
  *               name:
  *                 type: string
  *               address:
@@ -105,17 +103,15 @@ router.get('/:uuid', verifyToken, tripController.getTripDetail);
  *                 type: string
  *               mapy:
  *                 type: string
- *               congestion:
- *                 type: string
  *     responses:
  *       201:
  *         description: 추가 성공
  */
-router.post('/:tripId/spots', verifyToken, spotController.addSpot);
+router.post('/:uuid/spots', verifyToken, spotController.addSpot);
 
 /**
  * @swagger
- * /trip/{tripId}/spots/{spotId}:
+ * /trip/{uuid}/spots/{spotId}:
  *   patch:
  *     summary: 일정 수정
  *     tags: [Spot]
@@ -123,7 +119,7 @@ router.post('/:tripId/spots', verifyToken, spotController.addSpot);
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: tripId
+ *         name: uuid
  *         required: true
  *         schema:
  *           type: string
@@ -143,8 +139,6 @@ router.post('/:tripId/spots', verifyToken, spotController.addSpot);
  *                 type: string
  *               time:
  *                 type: string
- *               type:
- *                 type: string
  *               name:
  *                 type: string
  *               address:
@@ -153,19 +147,17 @@ router.post('/:tripId/spots', verifyToken, spotController.addSpot);
  *                 type: string
  *               mapy:
  *                 type: string
- *               congestion:
- *                 type: string
  *     responses:
  *       200:
  *         description: 수정 성공
  *       404:
  *         description: 장소 없음
  */
-router.patch('/:tripId/spots/:spotId', verifyToken, spotController.updateSpot);
+router.patch('/:uuid/spots/:spotId', verifyToken, spotController.updateSpot);
 
 /**
  * @swagger
- * /trip/{tripId}/spots/{spotId}:
+ * /trip/{uuid}/spots/{spotId}:
  *   delete:
  *     summary: 일정 삭제
  *     tags: [Spot]
@@ -173,7 +165,7 @@ router.patch('/:tripId/spots/:spotId', verifyToken, spotController.updateSpot);
  *       - bearerAuth: []
  *     parameters:
  *       - in: path
- *         name: tripId
+ *         name: uuid
  *         required: true
  *         schema:
  *           type: string
@@ -188,6 +180,6 @@ router.patch('/:tripId/spots/:spotId', verifyToken, spotController.updateSpot);
  *       404:
  *         description: 장소 없음
  */
-router.delete('/:tripId/spots/:spotId', verifyToken, spotController.deleteSpot);
+router.delete('/:uuid/spots/:spotId', verifyToken, spotController.deleteSpot);
 
 module.exports = router;

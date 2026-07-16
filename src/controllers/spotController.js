@@ -2,9 +2,9 @@ const prisma = require('../prisma');
 const { v4: uuidv4 } = require('uuid');
 
 // 공통 헬퍼 - trip 조회 및 권한 확인
-const getTripAndSchedule = async (tripId, userId) => {
+const getTripAndSchedule = async (uuid, userId) => {
   const trip = await prisma.trip.findUnique({
-    where: { uuid: tripId },
+    where: { uuid },
     include: {
       schedule: true,
       members: true,
@@ -26,40 +26,36 @@ const formatSpot = (place) => ({
   id: place.id,
   date: place.date,
   time: place.time,
-  type: place.type,
   name: place.name,
   address: place.address,
   mapx: place.mapx,
   mapy: place.mapy,
-  congestion: place.congestion,
 });
 
 // 일정 추가
 const addSpot = async (req, res) => {
   const { userId } = req.user;
-  const { tripId } = req.params;
-  const { date, time, type, name, address, mapx, mapy, congestion } = req.body;
+  const { uuid } = req.params;
+  const { date, time, name, address, mapx, mapy } = req.body;
 
   if (!date || !time || !name || !address) {
     return res.status(400).json({ message: '필수 값이 없습니다.' });
   }
 
   try {
-    const { trip, error, message } = await getTripAndSchedule(tripId, userId);
+    const { trip, error, message } = await getTripAndSchedule(uuid, userId);
     if (error) return res.status(error).json({ message });
 
     const places = trip.schedule.places || [];
 
     const newSpot = {
-      id: uuidv4(),  // spot id 자동 생성
+      id: uuidv4(),
       date,
       time,
-      type,
       name,
       address,
       mapx,
       mapy,
-      congestion,
     };
 
     const updatedPlaces = [...places, newSpot];
@@ -80,11 +76,11 @@ const addSpot = async (req, res) => {
 // 일정 수정
 const updateSpot = async (req, res) => {
   const { userId } = req.user;
-  const { tripId, spotId } = req.params;
+  const { uuid, spotId } = req.params;
   const updateData = req.body;
 
   try {
-    const { trip, error, message } = await getTripAndSchedule(tripId, userId);
+    const { trip, error, message } = await getTripAndSchedule(uuid, userId);
     if (error) return res.status(error).json({ message });
 
     const places = trip.schedule.places || [];
@@ -94,7 +90,6 @@ const updateSpot = async (req, res) => {
       return res.status(404).json({ message: '해당 장소를 찾을 수 없습니다.' });
     }
 
-    // 기존 spot에 수정 내용 병합 (부분 수정 가능)
     const updatedPlaces = [...places];
     updatedPlaces[spotIndex] = { ...places[spotIndex], ...updateData };
 
@@ -114,10 +109,10 @@ const updateSpot = async (req, res) => {
 // 일정 삭제
 const deleteSpot = async (req, res) => {
   const { userId } = req.user;
-  const { tripId, spotId } = req.params;
+  const { uuid, spotId } = req.params;
 
   try {
-    const { trip, error, message } = await getTripAndSchedule(tripId, userId);
+    const { trip, error, message } = await getTripAndSchedule(uuid, userId);
     if (error) return res.status(error).json({ message });
 
     const places = trip.schedule.places || [];
