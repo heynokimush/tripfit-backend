@@ -48,5 +48,6 @@ const { verifyToken } = require('../middlewares/authMiddleware');
  *         description: AI 서버 연결 실패
  */
 router.post('/', verifyToken, courseController.createCourse);
+router.get('/stream', verifyTokenFromQuery, courseController.createCourseStream);
 
 module.exports = router;
