@@ -41,4 +41,41 @@ const createInvite = async(req, res) => {
     }
 };
 
-module.exports = { createInvite };
+// 초대 참여
+const joinInvite = async (req, res) => {
+    const { userId } = req.user;
+    const { uuid } = req.params;
+
+    try {
+        // 1단계 - 여행 검증
+        const trip = await prisma.trip.findUnique({
+            where: { uuid },
+            include: { members: true }
+        });
+
+        // 여행 존재x 경우
+        if (!trip) {
+            return res.status(404).json({ message: '여행 정보를 찾을 수 없습니다.' });
+        }
+
+        // 2단계 - 참여 기록 검증
+        const alreadyMember = trip.members.some((mem) => mem.userId === userId);
+
+        if (alreadyMember) {
+            return res.status(409).json({ message: '이미 참여한 여행입니다.' });
+        }
+
+        // 3단계 - 멤버 추가
+        await prisma.tripMember.create({
+            data: { userId, tripId: trip.id }
+        });
+
+        return res.status(200).json({ message: '초대된 여행에 참여했습니다.', tripId: trip.uuid });
+
+    } catch (err) {
+        console.error('여행 참여 오류: ', err.message);
+        return res.status(500).json({ message: '여행 참여 중 오류가 발생했습니다.' });
+    }
+}
+
+module.exports = { createInvite, joinInvite };
