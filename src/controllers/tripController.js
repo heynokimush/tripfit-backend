@@ -43,11 +43,13 @@ const getTrips = async (req, res) => {
 // 특정 여행 상세 조회
 const getTripDetail = async (req, res) => {
   const { userId } = req.user;
-  const { tripId } = req.params;
+  // const { tripId } = req.params; // 오류 확인 필요
+  const { uuid } = req.params;
 
   try {
     const trip = await prisma.trip.findUnique({
-      where: { uuid: tripId },
+      // where: { uuid: tripId }, // 오류 확인 필요
+      where: { uuid },
       include: {
         schedule: true,
         members: {
