@@ -9,6 +9,7 @@ const authRouter = require('./routes/auth');
 const courseRouter = require('./routes/course');
 const tripRouter = require('./routes/trip');
 const userRouter = require('./routes/user');
+const inviteRouter = require('./routes/invite');
 
 const app = express();
 
@@ -31,6 +32,7 @@ app.use('/auth', authRouter);
 app.use('/course', courseRouter);
 app.use('/trip', tripRouter);
 app.use('/user', userRouter);
+app.use('/invite', inviteRouter);
 
 // 테스트용 라우트
 app.get('/', (req, res) => {
