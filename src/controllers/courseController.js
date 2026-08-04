@@ -1,5 +1,7 @@
 const axios = require('axios');
 const prisma = require('../prisma');
+const { parse } = require('node:path');
+const { StringDecoder } = require('string_decoder');
 
 const createCourse = async (req, res) => {
   const { userId } = req.user;
@@ -24,45 +26,34 @@ const createCourse = async (req, res) => {
       },
     });
 
-    // 임시 mock 데이터 (AI 서버 생기면 주석 해제)
-    const places = [
-    {
-        name: "경복궁",
-        address: "서울 종로구 사직로 161",
-        lat: "37.579617",
-        lng: "126.977041",
-        date: date.startDate,
-        time: "10:00",
-        congestion: "moderate"
-    }
-    ];
-    // // 2. 파이썬 AI 서버로 코스 요청
-    // const aiResponse = await axios.post(
-    //   `${process.env.AI_SERVER_URL}/course`,
-    //   {
-    //     types,
-    //     regionCodes,
-    //     startDate: date.startDate,
-    //     endDate: date.endDate,
-    //   }
-    // );
+    //임시 mock 데이터 (AI 서버 생기면 주석 해제)
+    // const places = [
+    // {
+    //     name: "경복궁",
+    //     address: "서울 종로구 사직로 161",
+    //     lat: "37.579617",
+    //     lng: "126.977041",
+    //     date: date.startDate,
+    //     time: "10:00",
+    //     congestion: "moderate"
+    // }
+    // ];
+    
 
-    // const places = aiResponse.data.places; // AI 서버 응답값
+    // // 3. Schedule DB에 저장
+    // const schedule = await prisma.schedule.create({
+    //   data: {
+    //     tripId: trip.id,
+    //     places: places,
+    //   },
+    // });
 
-    // 3. Schedule DB에 저장
-    const schedule = await prisma.schedule.create({
-      data: {
-        tripId: trip.id,
-        places: places,
-      },
-    });
-
-    // 4. 프론트에 응답
-    return res.status(201).json({
-      tripId: trip.uuid,
-      scheduleId: schedule.id,
-      places,
-    });
+    // // 4. 프론트에 응답
+    // return res.status(201).json({
+    //   tripId: trip.uuid,
+    //   scheduleId: schedule.id,
+    //   places,
+    // });
 
   } catch (err) {
     // AI 서버 연결 실패 시
@@ -75,6 +66,7 @@ const createCourse = async (req, res) => {
 };
 
 const createCourseStream = async (req, res) => {
+  console.log(" createCourseStream 진입 ");
   const { userId } = req.user;
   const { types, regionCodes, startDate, endDate } = req.query; 
   // GET이라 body 대신 query로 받음. types/regionCodes는 JSON.stringify해서 프론트가 전달
@@ -119,41 +111,105 @@ const createCourseStream = async (req, res) => {
     sendEvent('progress', { step: 'ai_generate', message: 'AI가 코스를 추천하고 있어요' });
 
     // 실제 AI 서버 호출 (아직 없으면 mock)
-    const places = [
-      {
-        id: uuidv4(),
-        name: '경복궁',
-        address: '서울 종로구 사직로 161',
-        mapx: '126.977041',
-        mapy: '37.579617',
-        date: startDate,
-        time: '10:00',
-      },
-    ];
+    // const places = [
+    //   {
+    //     id: uuidv4(),
+    //     name: '경복궁',
+    //     address: '서울 종로구 사직로 161',
+    //     mapx: '126.977041',
+    //     mapy: '37.579617',
+    //     date: startDate,
+    //     time: '10:00',
+    //   },
+    // ];
+
+    console.log("AI 서버 호출 시작 ", process.env.AI_SERVER_URL);
+    console.log({
+      cityCode: parsedRegionCodes[0].areaCode,
+      stateCode: parsedRegionCodes[0].sigunguCode,
+      startDate,
+      endDate,
+      partnerType: parsedTypes[0]
+    })
+
+    const aiResponse = await axios.post(`${process.env.AI_SERVER_URL}/course`, {
+      cityCode: parsedRegionCodes[0].areaCode,
+      stateCode: parsedRegionCodes[0].sigunguCode,
+      startDate,
+      endDate,
+      partnerType: parsedTypes[0]
+    }, {
+      responseType: 'stream'
+    });
 
     // const aiResponse = await axios.post(`${process.env.AI_SERVER_URL}/course`, {
     //   types: parsedTypes, regionCodes: parsedRegionCodes, startDate, endDate,
     // });
     // const places = aiResponse.data.places;
 
-    sendEvent('progress', { step: 'saving', message: '일정을 저장하고 있어요' });
+    const decoder = new StringDecoder('utf8');
+    let finalJson = '';
 
-    const schedule = await prisma.schedule.create({
-      data: { tripId: trip.id, places },
+    // 3. AI SSE 스트림 읽기
+    aiResponse.data.on('data', chunk => {
+      const text = decoder.write(chunk);
+
+      if (text.includes('[LOG]')) {
+        sendEvent('progress', { message: text.trim() });
+      } else if (text.includes('---')) {
+        sendEvent('progress', { message: '최종 추천 일정을 저자하고 있어요.' });
+      } else {
+        finalJson += text;
+      }
     });
 
-    // 완료 이벤트 - 최종 결과 전송
-    sendEvent('done', {
-      tripId: trip.uuid,
-      scheduleId: schedule.id,
-      places,
-    });
+    // 스트림 종료
+    aiResponse.data.on('end', async ()=>{
+        try{
+          finalJson += decoder.end();
+          const course = JSON.parse(finalJson);
 
-    res.end();
+          // AI 응답 places 추출
+          const places = course.days.flatMap(day => day.places.map(place=>({
+                  date: day.date,
+                  name: place.name,
+                  address: place.address,
+                  mapx: place.mapx,
+                  mapy: place.mapy,
+                  img: place.img,
+                  congestion: place.congestion,
+                  description: place.description
+                }))
+            );
 
-  } catch (err) {
-    console.error('코스 생성 스트림 에러:', err.message);
-    sendEvent('error', { message: '코스 생성 중 오류가 발생했습니다.' });
+          // DB 저장
+          const schedule =
+            await prisma.schedule.create({
+              data:{ tripId:trip.id, places}
+            });
+
+          sendEvent('done', {
+            tripId: trip.uuid,
+            scheduleId: schedule.id,
+            places
+            }
+          );
+          res.end();
+
+        }catch(err){
+          console.error("AI JSON 처리 오류", err);
+          sendEvent('error', { message: 'AI 결과 처리 실패' });
+          res.end();
+        }
+      }
+    );
+
+  }catch(err){
+
+    console.error("AI 스트림 오류", err);
+
+
+    sendEvent('error', { message:'AI 서버 연결 실패'});
     res.end();
   }
 };

@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const courseController = require('../controllers/courseController');
-const { verifyToken } = require('../middlewares/authMiddleware');
+const { verifyToken, verifyTokenFromQuery } = require('../middlewares/authMiddleware');
 
 /**
  * @swagger
