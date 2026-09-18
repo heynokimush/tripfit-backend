@@ -149,7 +149,7 @@ const createCourseStream = async (req, res) => {
 
     const decoder = new StringDecoder('utf8');
     let buffer = '';
-    // let finalJson = '';
+    let finalJson = '';
 
     // 3. AI SSE 스트림 읽기
     aiResponse.data.on('data', chunk => {
