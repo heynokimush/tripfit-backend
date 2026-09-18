@@ -148,26 +148,56 @@ const createCourseStream = async (req, res) => {
     // const places = aiResponse.data.places;
 
     const decoder = new StringDecoder('utf8');
-    let finalJson = '';
+    let buffer = '';
+    // let finalJson = '';
 
     // 3. AI SSE 스트림 읽기
     aiResponse.data.on('data', chunk => {
-      const text = decoder.write(chunk);
+      buffer += decoder.write(chunk);
 
-      if (text.includes('[LOG]')) {
-        sendEvent('progress', { message: text.trim() });
-      } else if (text.includes('---')) {
-        sendEvent('progress', { message: '최종 추천 일정을 저자하고 있어요.' });
-      } else {
-        finalJson += text;
+      const events = buffer.split('\n\n');
+      buffer = events.pop();
+
+      for (const e of events) {
+        const lines = event.split('\n');
+
+        let eventType = '';
+        let data = '';
+
+        for (const line of lines) {
+          if (line.startsWith('event:')) {
+            eventType = line.slice(6).trim();
+          }
+
+          if (line.startsWith('data:')) {
+            data += line.slice(5).trim();
+          }
+        }
+
+        if (!data) continue;
+
+        try {
+          const parsedData = JSON.parse(data);
+
+          if (eventType === 'progress') {
+            sendEvent('progress', {
+              message: parsedData.message
+            });
+          }
+
+          if (eventType === 'done') {
+            finalJson = parsedData;
+          }
+        } catch (err) {
+          console.error('SEE data 파싱 오류: ', err);
+        }
       }
     });
 
     // 스트림 종료
     aiResponse.data.on('end', async ()=>{
         try{
-          finalJson += decoder.end();
-          const course = JSON.parse(finalJson);
+          const course = finalJson;
 
           // AI 응답 places 추출
           const places = course.days.flatMap(day => day.places.map(place=>({
@@ -196,7 +226,7 @@ const createCourseStream = async (req, res) => {
           );
           res.end();
 
-        }catch(err){
+        } catch(err){
           console.error("AI JSON 처리 오류", err);
           sendEvent('error', { message: 'AI 결과 처리 실패' });
           res.end();
