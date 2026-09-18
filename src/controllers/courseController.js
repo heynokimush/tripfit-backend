@@ -186,6 +186,9 @@ const createCourseStream = async (req, res) => {
           }
 
           if (eventType === 'done') {
+            console.log('AI done: ', parsedData);
+            console.log('AI done days: ', parsedData.days);
+            
             finalJson = parsedData;
           }
         } catch (err) {
