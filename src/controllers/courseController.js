@@ -158,7 +158,7 @@ const createCourseStream = async (req, res) => {
       const events = buffer.split('\n\n');
       buffer = events.pop();
 
-      for (const e of events) {
+      for (const event of events) {
         const lines = event.split('\n');
 
         let eventType = '';
